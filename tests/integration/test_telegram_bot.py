@@ -11,7 +11,7 @@ from app.config.settings import TelegramSettings
 from app.integrations.telegram.bot import build_application, handle_error, main
 
 
-def test_initialization_and_command_dispatch() -> None:
+def test_initialization_and_command_dispatch(database) -> None:
     replies = []
 
     async def request(self, url, method, request_data=None, **kwargs):
@@ -39,7 +39,7 @@ def test_initialization_and_command_dispatch() -> None:
             _env_file=None,
             telegram_bot_token=SecretStr("123:TEST_ONLY"),
             allowed_telegram_user_id=42,
-            database_url="sqlite:///:memory:",
+            database_url=str(database[0].url),
         )
         application = build_application(settings)
         with patch.object(HTTPXRequest, "do_request", request):
@@ -47,8 +47,10 @@ def test_initialization_and_command_dispatch() -> None:
                 for command, user_id in [
                     ("/help", 42),
                     ("/today", 42),
+                    ("/exams", 42),
                     ("/help", 99),
                     ("/today", 99),
+                    ("/exams", 99),
                 ]:
                     update = Update.de_json(
                         {
@@ -78,8 +80,10 @@ def test_initialization_and_command_dispatch() -> None:
 
     asyncio.run(exercise())
     assert replies == [
-        "/help — Show available commands\n/today — Show today's overview",
+        "/help — Show available commands\n"
+        "/today — Show today's overview\n/exams — Show upcoming exams",
         "Nothing planned for today yet.",
+        "No upcoming exams found.",
     ]
 
 

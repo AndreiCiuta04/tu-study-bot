@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tuvienna xmlns="https://tiss.tuwien.ac.at/api/schemas/course/v10"
+ xmlns:i18n="https://tiss.tuwien.ac.at/api/schemas/i18n/v10" version="1.0">
+ <course>
+  <courseNumber>194025</courseNumber>
+  <semesterCode>2026S</semesterCode>
+  <title>
+   <i18n:de>Einführung in Machine Learning</i18n:de>
+   <i18n:en>Introduction to Machine Learning</i18n:en>
+  </title>
+ </course>
+</tuvienna>
