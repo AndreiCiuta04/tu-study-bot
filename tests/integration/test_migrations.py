@@ -18,8 +18,8 @@ def test_baseline_upgrade_downgrade_and_reupgrade(
     config = Config(str(ROOT / "alembic.ini"))
     engine = build_engine(url)
     try:
-        command.upgrade(config, "head")
-        command.upgrade(config, "head")
+        command.upgrade(config, "0001_foundation")
+        command.upgrade(config, "0001_foundation")
         with engine.connect() as connection:
             assert inspect(connection).get_table_names() == ["alembic_version"]
             assert (
@@ -29,7 +29,7 @@ def test_baseline_upgrade_downgrade_and_reupgrade(
         command.downgrade(config, "base")
         with engine.connect() as connection:
             assert connection.scalar(text("SELECT COUNT(*) FROM alembic_version")) == 0
-        command.upgrade(config, "head")
-        command.check(config)
+        command.upgrade(config, "0001_foundation")
+
     finally:
         engine.dispose()

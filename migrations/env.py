@@ -4,6 +4,7 @@ from alembic import context
 
 from app.config.logging import configure_logging
 from app.config.settings import Settings
+from app.db import models  # noqa: F401
 from app.db.base import Base
 from app.db.session import build_engine
 

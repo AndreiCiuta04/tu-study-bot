@@ -1,10 +1,12 @@
 """Run with python -m app.integrations.telegram.bot."""
 
 import logging
+from functools import partial
 from typing import Any
 
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from app.bootstrap import load_exams
 from app.config.logging import configure_logging
 from app.config.settings import TelegramSettings
 from app.integrations.telegram.handlers import TelegramHandlers
@@ -20,7 +22,9 @@ async def handle_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
 def build_application(
     settings: TelegramSettings,
 ) -> Application[Any, Any, Any, Any, Any, Any]:
-    handlers = TelegramHandlers(settings.allowed_telegram_user_id)
+    handlers = TelegramHandlers(
+        settings.allowed_telegram_user_id, partial(load_exams, settings.database_url)
+    )
     application = (
         Application.builder()
         .token(settings.telegram_bot_token.get_secret_value())
@@ -28,6 +32,7 @@ def build_application(
     )
     application.add_handler(CommandHandler("help", handlers.help))
     application.add_handler(CommandHandler("today", handlers.today))
+    application.add_handler(CommandHandler("exams", handlers.exams))
     application.add_error_handler(handle_error)
     return application
 

@@ -1,13 +1,13 @@
 # TUW Study Bot
 
-A private Telegram study assistant for TU Wien, designed to bring university
-information and personal study tasks into a daily overview.
+A private Telegram study assistant for TU Wien, bringing university information
+and personal study work into concise daily overviews.
 
-Currently supports restricted access for one user, `/help`, and `/today` with
-an empty state. University integrations and study planning are not available yet.
+Currently supports single-user access, public TISS exam imports, and exam
+countdowns. Commands: `/help`, `/today` (empty state), and `/exams`.
+TUWEL and personal study planning are not available yet.
 
-Built with Python 3.12+, FastAPI, python-telegram-bot, SQLAlchemy and Alembic,
-using SQLite locally.
+Python 3.12+, FastAPI, python-telegram-bot, SQLAlchemy, Alembic and SQLite.
 
 ## Local setup
 
@@ -21,10 +21,9 @@ cp .env.example .env
 alembic upgrade head
 ```
 
-For Telegram, replace `TUW_TELEGRAM_BOT_TOKEN` and
-`TUW_ALLOWED_TELEGRAM_USER_ID` in `.env` with your bot token and numeric user ID.
-Keep `.env` private. Environment variables override file settings.
-`TUW_DATABASE_URL` and `TUW_LOG_LEVEL` configure storage and logging.
+Set `TUW_TELEGRAM_BOT_TOKEN` and `TUW_ALLOWED_TELEGRAM_USER_ID` in your private
+`.env`. Environment variables override file settings. `TUW_DATABASE_URL` and
+`TUW_LOG_LEVEL` configure storage and logging.
 
 ## Run
 
@@ -32,18 +31,29 @@ Keep `.env` private. Environment variables override file settings.
 python -m app.integrations.telegram.bot
 ```
 
-The bot uses polling. Send `/help` or `/today` in a private chat.
-Other users and group chats are silently ignored.
-`/today` currently replies: “Nothing planned for today yet.”
+Use a private chat; other users and group chats are silently ignored.
+`/exams` lists imported exams from today onward, using Vienna calendar dates.
+It does not select exams or create personal plans.
 
-Run the independent HTTP application in another terminal if needed:
+Import exam dates explicitly; no Telegram or TISS credentials are needed:
+
+```bash
+python -m app.cli.sync_tiss 194.025 2026S
+python -m app.cli.sync_tiss 194025 2026S --from-date 2026-09-09
+```
+
+Select the course offering semester explicitly: the exam endpoint does not return
+a semester. Repeated imports update matching IDs and retain events absent from
+later responses. See [TISS data notes](docs/tiss.md) for endpoints and identity.
+
+Run the independent HTTP application if needed:
 
 ```bash
 uvicorn app.api.app:app --reload
 curl --fail http://127.0.0.1:8000/health
 ```
 
-Health returns `{"status":"ok"}` and requires no Telegram credentials.
+Health returns `{"status":"ok"}` without Telegram credentials.
 
 ## Development
 
@@ -55,6 +65,5 @@ mypy app
 alembic upgrade head
 ```
 
-Tests use temporary databases and mocked Telegram calls; no credentials or
-network access are required. Apply migrations explicitly before running;
-application startup does not change the schema.
+Tests use migrated temporary databases and mocked HTTP/Telegram calls.
+Application startup does not alter the schema.
