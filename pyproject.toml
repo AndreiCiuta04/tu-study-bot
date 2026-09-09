@@ -15,6 +15,7 @@ dependencies = [
     "pydantic-settings>=2.5,<3",
     "SQLAlchemy>=2.0,<2.1",
     "alembic>=1.13,<2",
+    "python-telegram-bot>=22,<23",
 ]
 
 [project.optional-dependencies]
@@ -40,5 +41,6 @@ line-length = 88
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 python_version = "3.12"
 strict = true
