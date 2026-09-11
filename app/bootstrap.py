@@ -6,12 +6,17 @@ from datetime import date
 
 import httpx
 
+from app.config.settings import TuwelSettings
 from app.db.session import build_engine, build_session_factory
-from app.entities.events import ExamOverview
+from app.entities.events import EventOverview, ExamOverview
 from app.integrations.tiss.client import TissClient
+from app.integrations.tuwel.auth import TokenAuth
+from app.integrations.tuwel.client import TuwelClient
 from app.repositories.unit_of_work import UnitOfWork
+from app.services.event_service import EventService
 from app.services.exam_service import ExamService
 from app.services.sync_service import SyncService
+from app.services.tuwel_sync_service import TuwelSyncService
 
 
 @contextmanager
@@ -40,3 +45,25 @@ async def sync_tiss(
 def load_exams(database_url: str) -> tuple[ExamOverview, ...]:
     with exam_service(database_url) as service:
         return service.upcoming()
+
+
+def load_events(database_url: str, *, week: bool = False) -> tuple[EventOverview, ...]:
+    engine = build_engine(database_url)
+    try:
+        service = EventService(UnitOfWork(build_session_factory(engine)))
+        return service.overview(week=week)
+    finally:
+        engine.dispose()
+
+
+async def sync_tuwel(settings: TuwelSettings) -> int:
+    engine = build_engine(settings.database_url)
+    try:
+        async with httpx.AsyncClient(timeout=30) as http:
+            client = TuwelClient(http, TokenAuth(settings.tuwel_token))
+            service = TuwelSyncService(
+                client, UnitOfWork(build_session_factory(engine))
+            )
+            return await service.sync(settings.tuwel_courses)
+    finally:
+        engine.dispose()

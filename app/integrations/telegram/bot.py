@@ -6,7 +6,7 @@ from typing import Any
 
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-from app.bootstrap import load_exams
+from app.bootstrap import load_events, load_exams
 from app.config.logging import configure_logging
 from app.config.settings import TelegramSettings
 from app.integrations.telegram.handlers import TelegramHandlers
@@ -23,7 +23,10 @@ def build_application(
     settings: TelegramSettings,
 ) -> Application[Any, Any, Any, Any, Any, Any]:
     handlers = TelegramHandlers(
-        settings.allowed_telegram_user_id, partial(load_exams, settings.database_url)
+        settings.allowed_telegram_user_id,
+        partial(load_exams, settings.database_url),
+        partial(load_events, settings.database_url),
+        partial(load_events, settings.database_url, week=True),
     )
     application = (
         Application.builder()
@@ -33,6 +36,8 @@ def build_application(
     application.add_handler(CommandHandler("help", handlers.help))
     application.add_handler(CommandHandler("today", handlers.today))
     application.add_handler(CommandHandler("exams", handlers.exams))
+    application.add_handler(CommandHandler("deadlines", handlers.deadlines))
+    application.add_handler(CommandHandler("week", handlers.week))
     application.add_error_handler(handle_error)
     return application
 

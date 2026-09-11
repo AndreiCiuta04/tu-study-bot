@@ -1,0 +1,9 @@
+{
+  "userid": 42,
+  "functions": [
+    {"name": "core_enrol_get_users_courses"},
+    {"name": "mod_assign_get_assignments"},
+    {"name": "core_calendar_get_calendar_events"},
+    {"name": "mod_assign_get_submission_status"}
+  ]
+}

@@ -12,6 +12,13 @@ class AwareDateTime(TypeDecorator[datetime]):
     impl = DateTime
     cache_ok = True
 
+    def compare_values(self, x: object, y: object) -> bool:
+        if isinstance(x, datetime) and isinstance(y, datetime):
+            if x.utcoffset() is None or y.utcoffset() is None:
+                return False
+            return x.astimezone(UTC) == y.astimezone(UTC)
+        return x == y
+
     def process_bind_param(
         self, value: datetime | None, dialect: Dialect
     ) -> datetime | None:

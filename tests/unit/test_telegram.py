@@ -15,12 +15,13 @@ def test_empty_today_and_help_formatting() -> None:
     assert format_today(get_today_items()) == "Nothing planned for today yet."
     assert format_help() == (
         "/help — Show available commands\n"
-        "/today — Show today's overview\n/exams — Show upcoming exams"
+        "/today — Show today's overview\n/exams — Show upcoming exams\n"
+        "/deadlines — Show upcoming deadlines\n/week — Show the next 7 days"
     )
     assert format_today(("Example item",)) == "Today\n• Example item"
 
 
-@pytest.mark.parametrize("command", ["help", "today", "exams"])
+@pytest.mark.parametrize("command", ["help", "today", "exams", "deadlines", "week"])
 @pytest.mark.parametrize(
     ("user_id", "chat_type", "allowed"),
     [
@@ -38,7 +39,9 @@ def test_handler_access_control(command, user_id, chat_type, allowed) -> None:
     update.effective_chat = None if chat_type is None else Mock(type=chat_type)
     update.effective_message = Mock(reply_text=AsyncMock())
     exam_service = Mock(return_value=())
-    handlers = TelegramHandlers(42, exam_service)
+    deadline_service = Mock(return_value=())
+    week_service = Mock(return_value=())
+    handlers = TelegramHandlers(42, exam_service, deadline_service, week_service)
     with patch(
         "app.integrations.telegram.handlers.today_service.get_today_items",
         return_value=(),
@@ -49,6 +52,8 @@ def test_handler_access_control(command, user_id, chat_type, allowed) -> None:
             "help": format_help(),
             "today": format_today(()),
             "exams": "No upcoming exams found.",
+            "deadlines": "No upcoming deadlines found.",
+            "week": "No events in the next 7 days.",
         }[command]
         update.effective_message.reply_text.assert_awaited_once_with(expected)
     else:
@@ -57,6 +62,11 @@ def test_handler_access_control(command, user_id, chat_type, allowed) -> None:
         exam_service.assert_called_once_with()
     else:
         exam_service.assert_not_called()
+    for name, callback in [("deadlines", deadline_service), ("week", week_service)]:
+        if allowed and command == name:
+            callback.assert_called_once_with()
+        else:
+            callback.assert_not_called()
     if allowed and command == "today":
         service.assert_called_once_with()
     else:
@@ -72,13 +82,17 @@ def test_today_formats_service_result() -> None:
         "app.integrations.telegram.handlers.today_service.get_today_items",
         return_value=("Service result",),
     ):
-        asyncio.run(TelegramHandlers(42, Mock(return_value=())).today(update, Mock()))
+        asyncio.run(
+            TelegramHandlers(
+                42, Mock(return_value=()), Mock(return_value=()), Mock(return_value=())
+            ).today(update, Mock())
+        )
     update.effective_message.reply_text.assert_awaited_once_with(
         "Today\n• Service result"
     )
 
 
-@pytest.mark.parametrize("command", ["help", "today", "exams"])
+@pytest.mark.parametrize("command", ["help", "today", "exams", "deadlines", "week"])
 def test_missing_message_is_ignored(command) -> None:
     update = Mock(spec=Update)
     update.effective_user = Mock(id=42)
@@ -88,9 +102,15 @@ def test_missing_message_is_ignored(command) -> None:
         "app.integrations.telegram.handlers.today_service.get_today_items"
     ) as service:
         asyncio.run(
-            getattr(TelegramHandlers(42, Mock(return_value=())), command)(
-                update, Mock()
-            )
+            getattr(
+                TelegramHandlers(
+                    42,
+                    Mock(return_value=()),
+                    Mock(return_value=()),
+                    Mock(return_value=()),
+                ),
+                command,
+            )(update, Mock())
         )
     service.assert_not_called()
 

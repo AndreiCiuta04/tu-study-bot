@@ -1,10 +1,19 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Course, Event
-from app.entities.events import EventData, Exam
+from app.entities.events import EventData, Exam, ScheduledEvent
+
+
+def _same_value(current: object, incoming: object) -> bool:
+    if isinstance(current, datetime) and isinstance(incoming, datetime):
+        if current.utcoffset() is None or incoming.utcoffset() is None:
+            return False
+        # Python compares matching ZoneInfo objects by wall time, ignoring fold.
+        return current.astimezone(UTC) == incoming.astimezone(UTC)
+    return current == incoming
 
 
 class EventRepository:
@@ -23,6 +32,8 @@ class EventRepository:
             "title": data.title,
             "starts_at": data.starts_at,
             "source_url": data.source_url,
+            "due_at": data.due_at,
+            "submission_status": data.submission_status,
         }
         if event is None:
             event = Event(
@@ -36,7 +47,10 @@ class EventRepository:
             )
             self._session.add(event)
         else:
-            if any(getattr(event, key) != value for key, value in values.items()):
+            if any(
+                not _same_value(getattr(event, key), value)
+                for key, value in values.items()
+            ):
                 for key, value in values.items():
                     setattr(event, key, value)
                 event.updated_at = seen_at
@@ -54,4 +68,43 @@ class EventRepository:
         return tuple(
             Exam(event.id, name, event.title, event.starts_at, event.source_url)
             for event, name in rows
+            if event.starts_at is not None
+        )
+
+    def scheduled(
+        self,
+        since: datetime,
+        until: datetime | None = None,
+        *,
+        deadlines_only: bool = False,
+    ) -> tuple[ScheduledEvent, ...]:
+        occurrence = (
+            Event.due_at
+            if deadlines_only
+            else func.coalesce(Event.due_at, Event.starts_at)
+        )
+        query = (
+            select(Event, Course.name, occurrence)
+            .join(Course)
+            .where(occurrence >= since)
+        )
+        if until is not None:
+            query = query.where(occurrence < until)
+        if deadlines_only:
+            query = query.where(
+                Event.event_type.in_(("assignment", "submission_deadline", "quiz"))
+            )
+        rows = self._session.execute(query.order_by(occurrence, Course.name, Event.id))
+        return tuple(
+            ScheduledEvent(
+                event.id,
+                name,
+                event.title,
+                at,
+                event.event_type,
+                event.source,
+                event.source_url,
+                event.submission_status,
+            )
+            for event, name, at in rows
         )

@@ -1,0 +1,15 @@
+{
+  "courses": [
+    {
+      "id": 101,
+      "assignments": [
+        {
+          "id": 501, "cmid": 601, "course": 101, "name": "Assignment 2",
+          "duedate": 1792014900, "allowsubmissionsfromdate": 0,
+          "teamsubmission": 0
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}

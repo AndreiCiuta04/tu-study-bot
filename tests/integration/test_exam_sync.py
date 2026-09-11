@@ -176,7 +176,9 @@ def test_exams_handler_against_persisted_data(database) -> None:
     update.effective_user.id = 42
     update.effective_chat.type = "private"
     update.effective_message.reply_text = AsyncMock()
-    handlers = TelegramHandlers(42, lambda: service.upcoming(NOW))
+    handlers = TelegramHandlers(
+        42, lambda: service.upcoming(NOW), Mock(return_value=()), Mock(return_value=())
+    )
     asyncio.run(handlers.exams(update, Mock()))
     update.effective_message.reply_text.assert_awaited_once_with(
         "No upcoming exams found."

@@ -1,0 +1,15 @@
+{
+  "events": [
+    {
+      "id": 701, "courseid": 101, "name": "Calendar copy",
+      "modulename": "assign", "instance": 501, "eventtype": "due",
+      "timestart": 1792014900, "timeduration": 0, "visible": 1
+    },
+    {
+      "id": 702, "courseid": 101, "name": "Quiz closes",
+      "modulename": "quiz", "instance": 502, "eventtype": "close",
+      "timestart": 1792101300, "timeduration": 0, "visible": 1
+    }
+  ],
+  "warnings": []
+}

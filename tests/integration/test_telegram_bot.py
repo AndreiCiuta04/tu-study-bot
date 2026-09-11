@@ -48,9 +48,13 @@ def test_initialization_and_command_dispatch(database) -> None:
                     ("/help", 42),
                     ("/today", 42),
                     ("/exams", 42),
+                    ("/deadlines", 42),
+                    ("/week", 42),
                     ("/help", 99),
                     ("/today", 99),
                     ("/exams", 99),
+                    ("/deadlines", 99),
+                    ("/week", 99),
                 ]:
                     update = Update.de_json(
                         {
@@ -81,9 +85,12 @@ def test_initialization_and_command_dispatch(database) -> None:
     asyncio.run(exercise())
     assert replies == [
         "/help — Show available commands\n"
-        "/today — Show today's overview\n/exams — Show upcoming exams",
+        "/today — Show today's overview\n/exams — Show upcoming exams\n"
+        "/deadlines — Show upcoming deadlines\n/week — Show the next 7 days",
         "Nothing planned for today yet.",
         "No upcoming exams found.",
+        "No upcoming deadlines found.",
+        "No events in the next 7 days.",
     ]
 
 

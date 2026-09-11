@@ -3,9 +3,9 @@
 A private Telegram study assistant for TU Wien, bringing university information
 and personal study work into concise daily overviews.
 
-Currently supports single-user access, public TISS exam imports, and exam
-countdowns. Commands: `/help`, `/today` (empty state), and `/exams`.
-TUWEL and personal study planning are not available yet.
+Supports single-user access, TISS exams, TUWEL assignments/deadlines and Vienna-local
+countdowns. Commands: `/help`, `/today` (empty state), `/exams`, `/deadlines`,
+and `/week`. Personal study planning is not available yet.
 
 Python 3.12+, FastAPI, python-telegram-bot, SQLAlchemy, Alembic and SQLite.
 
@@ -45,6 +45,16 @@ python -m app.cli.sync_tiss 194025 2026S --from-date 2026-09-09
 Select the course offering semester explicitly: the exam endpoint does not return
 a semester. Repeated imports update matching IDs and retain events absent from
 later responses. See [TISS data notes](docs/tiss.md) for endpoints and identity.
+
+For TUWEL, set `TUW_TUWEL_TOKEN` and the verified course mappings in
+`TUW_TUWEL_COURSES`, then run:
+
+```bash
+python -m app.cli.sync_tuwel
+```
+
+See [TUWEL setup and limitations](docs/tuwel.md). Imports are explicit; no
+background scheduler runs. `/deadlines` and `/week` read saved data.
 
 Run the independent HTTP application if needed:
 

@@ -5,6 +5,8 @@ from typing import Literal
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.integrations.tuwel.mapper import CourseMapping
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -27,3 +29,11 @@ class TelegramSettings(Settings):
 
     telegram_bot_token: SecretStr = Field(min_length=1)
     allowed_telegram_user_id: int = Field(gt=0)
+
+
+class TuwelSettings(Settings):
+    """Only the explicit TUWEL import requires a token and course selection."""
+
+    model_config = SettingsConfigDict(hide_input_in_errors=True)
+    tuwel_token: SecretStr = Field(min_length=1)
+    tuwel_courses: dict[int, CourseMapping] = Field(default_factory=dict)
